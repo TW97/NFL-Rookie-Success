@@ -85,12 +85,16 @@ all_data.sixty_shuttle.replace(0, np.nan, inplace=True)
 all_data.three_cone.replace(0, np.nan, inplace=True)
 all_data.four_square.replace(0, np.nan, inplace=True)
 
-imp_columns = ['round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder',
+#position dummy variables 
+all_data[['QB', 'RB', 'TE', 'WR']] = pd.get_dummies(all_data['position'])
+
+
+imp_columns = ['QB', 'RB', 'TE', 'WR', 'round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder',
 'wonderlic', 'pass_velocity', 'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump',
 'shuttle', 'sixty_shuttle', 'three_cone', 'four_square', 'games', 'cmp', 'pass_att', 'pass_yards', 'pass_td', 'intcp',
 'rating', 'rush_att', 'rush_yards', 'rush_td', 'rec', 'rec_yards', 'rec_td', 'college_points', 'avg_diff', 'age']
 
-imp_numeric = all_data[['round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder',
+imp_numeric = all_data[['QB', 'RB', 'TE', 'WR', 'round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder',
 'back_shoulder', 'wonderlic', 'pass_velocity', 'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 
 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone', 'four_square', 'games', 'cmp', 'pass_att', 'pass_yards', 'pass_td', 
 'intcp', 'rating', 'rush_att', 'rush_yards', 'rush_td', 'rec', 'rec_yards', 'rec_td', 'college_points', 
@@ -116,9 +120,7 @@ rb_data = master_data[master_data.position == 'RB']
 te_data = master_data[master_data.position == 'TE']
 qb_data = master_data[master_data.position == 'QB']
 
-
 # 'count', 'sum', 'mean', 'std', 'first', 'last', 'max', 'min', 'median'
-
 
 wr_data = wr_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', 'birth_date', 'draft_year', 'age', 'round', 
 'pick', 'position', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
