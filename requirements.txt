@@ -1,0 +1,4 @@
+pandas==0.25.0
+numpy==1.16.4
+fancyimpute==0.5.4
+scikit_learn==0.21.3
