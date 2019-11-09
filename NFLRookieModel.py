@@ -4,10 +4,10 @@
 import pandas as pd
 import numpy as np
 from fancyimpute import KNN
-from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import ElasticNet
@@ -15,6 +15,9 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import VotingRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 import os
 
 file_path = os.path.dirname(os.path.abspath("__file__"))
@@ -148,13 +151,13 @@ qb_data = qb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', '
                    'avg_diff']]
 
 
-# qb_data.corr()[['points']].transpose().to_csv('QBCorr.csv')
-
-# rb_data.corr()[['points']].transpose().to_csv('RBCorr.csv')
-
-# wr_data.corr()[['points']].transpose().to_csv('WRCorr.csv')
-
-# te_data.corr()[['points']].transpose().to_csv('TECorr.csv')
+#qb_data.corr()[['points']].transpose().to_csv('QBCorr.csv')
+#
+#rb_data.corr()[['points']].transpose().to_csv('RBCorr.csv')
+#
+#wr_data.corr()[['points']].transpose().to_csv('WRCorr.csv')
+#
+#te_data.corr()[['points']].transpose().to_csv('TECorr.csv')
 
 # qb_data.to_csv('QBPlayerData.csv')
 # rb_data.to_csv('RBPlayerData.csv')
@@ -164,10 +167,8 @@ qb_data = qb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', '
 #                 index=False)
 
 
-X = qb_data[['age','pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder',
-'wonderlic', 'pass_velocity', 'shuttle', 'sixty_shuttle', 'three_cone', 'four_square', 'speed_score', 'agility_score',
-'burst_score',  'height_adj_ss', 'cmp', 'pass_att', 'pass_yards', 'pass_td', 'rush_att',
-'rush_yards', 'rush_td', 'avg_diff']]
+X = qb_data[['age', 'pick', 'bench_press', 'ten_yard', 'twenty_yard',
+    'forty_yard', 'pass_velocity', 'three_cone', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
 
 y = qb_data['points']
 
@@ -195,19 +196,23 @@ y = qb_data['points']
 #                   'college_points', 'avg_diff']]
 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
-
-# model = LinearRegression()
-dt = DecisionTreeRegressor()
-model = RandomForestRegressor(n_estimators=500, oob_score=True, random_state=100)
-model.fit(X_train, y_train)
-
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=100)
+rd = Ridge()
+ls = Lasso()
+en = ElasticNet()
+lr = LinearRegression()
+#knr = KNeighborsRegressor()
+#sv = SVR()
+#dt = DecisionTreeRegressor()
+#rfr = RandomForestRegressor(n_estimators=500, oob_score=True, random_state=100)
+#gbr = GradientBoostingRegressor(random_state=100, n_estimators=500)
+model = VotingRegressor(estimators=[('lr', lr), ('en', en), ('rd', rd), ('ls', ls)])
+#model.fit(X_train, y_train)
+#
+#predicted = model.predict(X_test)
+#print(r2_score(y_test, predicted))
 # predict probabilities
-predicted = model.predict(X_test)
-
-print(mean_squared_error(y_test, predicted))
-
-print(r2_score(y_test, predicted))
+scores = cross_val_score(model, X, y, cv=5, scoring="r2")
 
 # pd.DataFrame(model.coef_, X.columns, columns=['Coefficient']) 
 
