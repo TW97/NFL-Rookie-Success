@@ -4,20 +4,13 @@
 import pandas as pd
 import numpy as np
 from fancyimpute import KNN
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import ElasticNet
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.linear_model import Lasso, ElasticNet, ElasticNetCV, Ridge, LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import VotingRegressor
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor, VotingRegressor, GradientBoostingRegressor
 import os
 
 file_path = os.path.dirname(os.path.abspath("__file__"))
@@ -39,12 +32,14 @@ def q75(x):
 
 print(df[(df.pick.isnull() == True) & (df.draft_year1.isnull() == False)])
 
-college_stats['college_points'] = college_stats.pass_yards * 0.04 + college_stats.pass_td * 4 + (college_stats.intcp * -2) + ((college_stats.rush_yards + college_stats.rec_yards) * 0.10) + ((college_stats.rush_td + college_stats.rec_td) * 6) + college_stats.rec * 0.5
+college_stats['college_points'] = college_stats.pass_yards * 0.04 + college_stats.pass_td * 4 + \
+(college_stats.intcp * -2) + ((college_stats.rush_yards + college_stats.rec_yards) * 0.10) + \
+((college_stats.rush_td + college_stats.rec_td) * 6) + college_stats.rec * 0.5
 
 # college_summary = college_stats.groupby("college_pid").agg(['count', 'sum', 'mean', 'first',
 #                                                             'last', 'max', 'min', 'median']).reset_index()
 college_trend = college_stats.groupby('college_pid')['college_points'].apply(lambda x: 
-                                                           x.diff().mean()).reset_index(name='avg_diff').fillna(0)
+   x.diff().mean()).reset_index(name='avg_diff').fillna(0)
 
 college_summary = college_stats.groupby("college_pid").mean().reset_index()
 college_summary = college_summary.merge(college_trend, on='college_pid')
@@ -53,17 +48,7 @@ college_summary = college_summary.merge(college_trend, on='college_pid')
 df['draft_year'].fillna(df['draft_year1'], inplace=True)
 df['position'].fillna(df['position1'], inplace=True)
 
-# merge and drop players without combine data or without any stats
-stats = stats.merge(df[['player_id', 'draft_year']], on='player_id', how='outer')
-
-# remove all seasons except first four
-stats = stats[(stats.season - stats.draft_year) < 4]
-
-# summary_stats = stats.groupby("player_id").agg(['count', 'sum', 'mean', 'std', 'first', 'last', 'max', 'min', q25, 'median',
-#                                 q75])['points'].reset_index()
-summary_stats = stats.groupby("player_id").mean()['points'].reset_index()
-
-all_data = summary_stats.merge(df, on='player_id', how='inner').merge(college_summary, on='college_pid', how='inner')
+all_data = df.merge(college_summary, on='college_pid', how='inner')
 
 all_data = all_data[all_data.name != "Dan Vitale"]
 
@@ -118,10 +103,22 @@ master_data['height_adj_ss'] = master_data.speed_score * (master_data.height / 7
 master_data['burst_score'] = master_data.vertical_leap + master_data.broad_jump
 # catch radius and weight adjusted bench ?
 
-wr_data = master_data[master_data.position == 'WR']
-rb_data = master_data[master_data.position == 'RB']
-te_data = master_data[master_data.position == 'TE']
-qb_data = master_data[master_data.position == 'QB']
+# merge and drop players without combine data or without any stats
+stats = stats.merge(df[['player_id', 'draft_year']], on='player_id', how='outer')
+
+# remove all seasons except first four
+stats = stats[(stats.season - stats.draft_year) < 4]
+
+# summary_stats = stats.groupby("player_id").agg(['count', 'sum', 'mean', 'std', 'first', 'last', 'max', 'min', q25, 'median',
+#                                 q75])['points'].reset_index()
+summary_stats = stats.groupby("player_id").mean()['points'].reset_index()
+
+master_data_clean = master_data.merge(summary_stats, on='player_id', how='inner')
+
+wr_data = master_data_clean[master_data_clean.position == 'WR']
+rb_data = master_data_clean[master_data_clean.position == 'RB']
+te_data = master_data_clean[master_data_clean.position == 'TE']
+qb_data = master_data_clean[master_data_clean.position == 'QB']
 
 # 'count', 'sum', 'mean', 'std', 'first', 'last', 'max', 'min', 'median'
 
@@ -167,8 +164,8 @@ qb_data = qb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', '
 #                 index=False)
 
 
-X = qb_data[['age', 'pick', 'bench_press', 'ten_yard', 'twenty_yard',
-    'forty_yard', 'pass_velocity', 'three_cone', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
+X = qb_data[['age', 'pick', 'bench_press', 'pass_velocity', 'broad_jump', 'agility_score',
+             'height_adj_ss', 'college_points']]
 
 y = qb_data['points']
 
@@ -196,23 +193,55 @@ y = qb_data['points']
 #                   'college_points', 'avg_diff']]
 
 
+alphas = [0.0001, 0.001, 0.01, 0.3, 0.5, 0.7, 1]
+
+for a in alphas:
+    model = ElasticNet(alpha=a).fit(X, y)
+    pred_y = model.predict(X)
+    r2 = cross_val_score(model, X, y, cv=5, scoring="r2")
+    mse = cross_val_score(model, X, y, cv=5, scoring="neg_mean_squared_error")
+    print("Alpha:{0:.4f}, R2 Max:{1:.2f}, R2 Avg:{2:.2f}, R2 Min:{3:.2f}, R2 Stdev:{4:.2f}, \
+          MSE Max:{5:.2f}, MSE Avg:{6:.2f}, MSE Min:{7:.2f}, MSE Stdev:{8:.2f}"
+       .format(a, r2.max(), r2.mean(), r2.min(), r2.std(), mse.max(), mse.mean(), mse.min(), mse.std()))
+
 #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=100)
 rd = Ridge()
 ls = Lasso()
-en = ElasticNet()
+model = ElasticNet(alpha=0.3)
 lr = LinearRegression()
 #knr = KNeighborsRegressor()
 #sv = SVR()
 #dt = DecisionTreeRegressor()
 #rfr = RandomForestRegressor(n_estimators=500, oob_score=True, random_state=100)
 #gbr = GradientBoostingRegressor(random_state=100, n_estimators=500)
-model = VotingRegressor(estimators=[('lr', lr), ('en', en), ('rd', rd), ('ls', ls)])
-#model.fit(X_train, y_train)
-#
-#predicted = model.predict(X_test)
-#print(r2_score(y_test, predicted))
-# predict probabilities
-scores = cross_val_score(model, X, y, cv=5, scoring="r2")
+#model = VotingRegressor(estimators=[('en', en), ('ls', ls)])
+seasons = [x for x in range(1987, 2019)]
+scores = []
+for season in seasons:
+    X_train = qb_data[qb_data.draft_year != season][['age', 'pick', 'bench_press',
+            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
+    X_test = qb_data[qb_data.draft_year == season][['age', 'pick', 'bench_press',
+            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
+    y_train = qb_data[qb_data.draft_year != season]['points']
+    y_test = qb_data[qb_data.draft_year == season]['points']
+    model = ElasticNet(alpha=0.3)
+    model.fit(X_train, y_train)
+    fit_score = model.score(X_train, y_train)
+    predicted = model.predict(X_test)
+    score = r2_score(y_test, predicted)
+    print("Season: ", season, "\t", "Train R-Squared", fit_score, "\t", "Test R-Squared: ", score)
 
-# pd.DataFrame(model.coef_, X.columns, columns=['Coefficient']) 
+# 2019 Predictions... Lock high, Kyler low, Gardner? -- Adjust college stats for players who don't start immediately
+qb_19 = master_data[(master_data.draft_year == 2019) & (master_data.position == 'QB')]
+qb_19_x = qb_19[['age', 'pick', 'bench_press',
+            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
 
+qb_model = ElasticNet(alpha=0.3)
+qb_model.fit(X, y)
+qb_predicted = qb_model.predict(qb_19_x)
+print(pd.DataFrame(qb_model.coef_, qb_19_x.columns, columns=['Coefficient'])) 
+print("Model Intercept: ", model.intercept_) 
+qb_19['predicted_points'] = qb_predicted
+qb_19 = qb_19[['name', 'predicted_points', 'draft_year',
+'age', 'pick', 'pass_velocity', 'bench_press', 'broad_jump', 'agility_score',
+ 'height_adj_ss','college_pid', 'college_points', 'player_id']]
