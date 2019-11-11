@@ -1,5 +1,4 @@
 # coding: utf-8
-
 # packages needed
 import pandas as pd
 import numpy as np
@@ -41,10 +40,10 @@ college_stats['college_points'] = college_stats.pass_yards * 0.04 + college_stat
 college_trend = college_stats.groupby('college_pid')['college_points'].apply(lambda x: 
    x.diff().mean()).reset_index(name='avg_diff').fillna(0)
 
-college_summary = college_stats.groupby("college_pid").mean().reset_index()
+college_summary = college_stats.groupby("college_pid").agg(['mean', 'max']).reset_index()
+college_summary.columns = college_summary.columns.map('_'.join).str.strip('_')
 college_summary = college_summary.merge(college_trend, on='college_pid')
 
-# college_summary.columns = college_summary.columns.map('_'.join).str.strip('_')
 df['draft_year'].fillna(df['draft_year1'], inplace=True)
 df['position'].fillna(df['position1'], inplace=True)
 
@@ -77,16 +76,23 @@ all_data.four_square.replace(0, np.nan, inplace=True)
 all_data[['QB', 'RB', 'TE', 'WR']] = pd.get_dummies(all_data['position'])
 
 
-imp_columns = ['QB', 'RB', 'TE', 'WR', 'round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder',
-'wonderlic', 'pass_velocity', 'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump',
-'shuttle', 'sixty_shuttle', 'three_cone', 'four_square', 'games', 'cmp', 'pass_att', 'pass_yards', 'pass_td', 'intcp',
-'rating', 'rush_att', 'rush_yards', 'rush_td', 'rec', 'rec_yards', 'rec_td', 'college_points', 'avg_diff', 'age']
+imp_columns = ['QB', 'RB', 'TE', 'WR', 'round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 
+'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic', 'pass_velocity', 'ten_yard', 'twenty_yard',
+'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
+'four_square', 'games_mean', 'games_max', 'cmp_mean', 'cmp_max', 'pass_att_mean', 'pass_att_max', 
+'pass_yards_mean', 'pass_yards_max', 'pass_td_mean', 'pass_td_max', 'intcp_mean', 'intcp_max',
+'rating_mean', 'rating_max', 'rush_att_mean', 'rush_att_max',
+'rush_yards_mean', 'rush_yards_max', 'rush_td_mean', 'rush_td_max', 'rec_mean', 'rec_max', 'rec_yards_mean',
+'rec_yards_max', 'rec_td_mean', 'rec_td_max', 'college_points_mean', 'college_points_max', 'avg_diff', 'age']
 
-imp_numeric = all_data[['QB', 'RB', 'TE', 'WR', 'round', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder',
-'back_shoulder', 'wonderlic', 'pass_velocity', 'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 
-'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone', 'four_square', 'games', 'cmp', 'pass_att', 'pass_yards', 'pass_td', 
-'intcp', 'rating', 'rush_att', 'rush_yards', 'rush_td', 'rec', 'rec_yards', 'rec_td', 'college_points', 
-                        'avg_diff', 'age']].values
+imp_numeric = all_data[['QB', 'RB', 'TE', 'WR', 'round', 'pick', 'height', 'weight', 'bmi', 'arm_length',
+'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic', 'pass_velocity', 'ten_yard', 
+'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle',
+'three_cone', 'four_square', 'games_mean', 'games_max', 'cmp_mean', 'cmp_max', 'pass_att_mean', 'pass_att_max', 
+'pass_yards_mean', 'pass_yards_max', 'pass_td_mean', 'pass_td_max', 'intcp_mean', 'intcp_max',
+'rating_mean', 'rating_max', 'rush_att_mean', 'rush_att_max',
+'rush_yards_mean', 'rush_yards_max', 'rush_td_mean', 'rush_td_max', 'rec_mean', 'rec_max', 'rec_yards_mean',
+'rec_yards_max', 'rec_td_mean', 'rec_td_max', 'college_points_mean', 'college_points_max', 'avg_diff', 'age']].values
 
 # KNN imputing
 imp = pd.DataFrame(KNN(k=5).fit_transform(imp_numeric), columns=imp_columns)
@@ -115,82 +121,33 @@ summary_stats = stats.groupby("player_id").mean()['points'].reset_index()
 
 master_data_clean = master_data.merge(summary_stats, on='player_id', how='inner')
 
-wr_data = master_data_clean[master_data_clean.position == 'WR']
-rb_data = master_data_clean[master_data_clean.position == 'RB']
-te_data = master_data_clean[master_data_clean.position == 'TE']
 qb_data = master_data_clean[master_data_clean.position == 'QB']
 
 # 'count', 'sum', 'mean', 'std', 'first', 'last', 'max', 'min', 'median'
 
-wr_data = wr_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', 'birth_date', 'draft_year', 'age', 'round', 
-'pick', 'position', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
-'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 'rec', 'rec_yards', 'rec_td', 
-                   'college_points', 'avg_diff']]
-
-te_data = te_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', 'birth_date', 'draft_year', 'age', 'round', 
-'pick', 'position', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
-'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 'rec', 'rec_yards', 'rec_td',
-                   'college_points', 'avg_diff']]
-
-rb_data = rb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', 'birth_date', 'draft_year', 'age', 'round', 
-'pick', 'position', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
-'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 'rush_att', 'rush_yards', 'rush_td',
-'rec', 'rec_yards', 'rec_td', 'college_points', 'avg_diff']]
-
-qb_data = qb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', 'birth_date', 'draft_year', 'age', 'round', 
-'pick', 'position', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-'pass_velocity', 'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle',
-'sixty_shuttle', 'three_cone', 'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 
-'cmp', 'pass_att', 'pass_yards', 'pass_td', 'intcp', 'rating', 'rush_att', 'rush_yards', 'rush_td', 'college_points', 
-                   'avg_diff']]
+qb_data = qb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', 'birth_date', 'draft_year',
+'age', 'round', 'pick', 'position', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 
+'back_shoulder', 'wonderlic', 'pass_velocity', 'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 
+'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone', 'four_square', 'speed_score',
+'agility_score', 'burst_score',  'height_adj_ss', 'games_mean', 'games_max', 'cmp_mean', 'cmp_max', 
+'pass_att_mean', 'pass_att_max', 'pass_yards_mean', 'pass_yards_max', 'pass_td_mean', 'pass_td_max',
+'intcp_mean', 'intcp_max', 'rating_mean', 'rating_max', 'rush_att_mean', 'rush_att_max', 
+'rush_yards_mean', 'rush_yards_max', 'rush_td_mean', 'rush_td_max', 'college_points_mean',
+ 'college_points_max', 'avg_diff']]
 
 
 #qb_data.corr()[['points']].transpose().to_csv('QBCorr.csv')
-#
-#rb_data.corr()[['points']].transpose().to_csv('RBCorr.csv')
-#
-#wr_data.corr()[['points']].transpose().to_csv('WRCorr.csv')
-#
-#te_data.corr()[['points']].transpose().to_csv('TECorr.csv')
+
 
 # qb_data.to_csv('QBPlayerData.csv')
-# rb_data.to_csv('RBPlayerData.csv')
-# wr_data.to_csv('WRPlayerData.csv')
-# te_data.to_csv('TEPlayerData.csv')
 # master_data.to_csv('NFLPlayerData.csv', 
 #                 index=False)
 
 
 X = qb_data[['age', 'pick', 'bench_press', 'pass_velocity', 'broad_jump', 'agility_score',
-             'height_adj_ss', 'college_points']]
+             'height_adj_ss', 'college_points_max', 'avg_diff']]
 
 y = qb_data['points']
-
-#X = rb_data[['age', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-#'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
-#'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 'rush_att', 'rush_yards', 'rush_td',
-#'rec', 'rec_yards', 'rec_td', 'college_points', 'avg_diff']]
-#
-#y = rb_data['points']
-#
-#
-#y = wr_data['points']
-#
-#X = wr_data[['age', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-#'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
-#'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 'rec', 'rec_yards', 'rec_td', 
-#                   'college_points', 'avg_diff']]
-#
-#
-#y = te_data['points']
-#
-#X = te_data[['age', 'pick', 'height', 'weight', 'bmi', 'arm_length', 'hand_size', 'front_shoulder', 'back_shoulder', 'wonderlic',
-#'ten_yard', 'twenty_yard', 'forty_yard', 'bench_press', 'vertical_leap', 'broad_jump', 'shuttle', 'sixty_shuttle', 'three_cone',
-#'four_square', 'speed_score', 'agility_score', 'burst_score',  'height_adj_ss', 'games', 'rec', 'rec_yards', 'rec_td',
-#                   'college_points', 'avg_diff']]
 
 
 alphas = [0.0001, 0.001, 0.01, 0.3, 0.5, 0.7, 1]
@@ -219,9 +176,11 @@ seasons = [x for x in range(1987, 2019)]
 scores = []
 for season in seasons:
     X_train = qb_data[qb_data.draft_year != season][['age', 'pick', 'bench_press',
-            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
+            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss',
+            'college_points_max', 'avg_diff']]
     X_test = qb_data[qb_data.draft_year == season][['age', 'pick', 'bench_press',
-            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
+            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss',
+            'college_points_max', 'avg_diff']]
     y_train = qb_data[qb_data.draft_year != season]['points']
     y_test = qb_data[qb_data.draft_year == season]['points']
     model = ElasticNet(alpha=0.3)
@@ -231,17 +190,18 @@ for season in seasons:
     score = r2_score(y_test, predicted)
     print("Season: ", season, "\t", "Train R-Squared", fit_score, "\t", "Test R-Squared: ", score)
 
-# 2019 Predictions... Lock high, Kyler low, Gardner? -- Adjust college stats for players who don't start immediately
+# 2019 Predictions... tweak the college points, adjust for running QB v Pocket Passer, add in conference?
 qb_19 = master_data[(master_data.draft_year == 2019) & (master_data.position == 'QB')]
 qb_19_x = qb_19[['age', 'pick', 'bench_press',
-            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 'college_points']]
+            'pass_velocity', 'broad_jump', 'agility_score', 'height_adj_ss', 
+            'college_points_max', 'avg_diff']]
 
 qb_model = ElasticNet(alpha=0.3)
 qb_model.fit(X, y)
 qb_predicted = qb_model.predict(qb_19_x)
 print(pd.DataFrame(qb_model.coef_, qb_19_x.columns, columns=['Coefficient'])) 
-print("Model Intercept: ", model.intercept_) 
+print("Model Intercept: ", qb_model.intercept_) 
 qb_19['predicted_points'] = qb_predicted
 qb_19 = qb_19[['name', 'predicted_points', 'draft_year',
 'age', 'pick', 'pass_velocity', 'bench_press', 'broad_jump', 'agility_score',
- 'height_adj_ss','college_pid', 'college_points', 'player_id']]
+ 'height_adj_ss','college_pid', 'avg_diff', 'college_points_max', 'player_id']]
