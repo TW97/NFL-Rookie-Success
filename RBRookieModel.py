@@ -141,7 +141,7 @@ rb_data = rb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', '
 
 
 
-X = rb_data[['age', 'pick', 'height', 'weight', 'arm_length', 'wonderlic', 'ten_yard',
+X = rb_data[['age', 'pick', 'height', 'weight', 'arm_length', 'ten_yard',
 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 'height_adj_ss',
 'college_points', 'avg_diff']]
 
@@ -174,10 +174,10 @@ seasons = [x for x in range(1987, 2019)]
 scores = []
 for season in seasons:
     X_train = rb_data[rb_data.draft_year != season][['age', 'pick', 'height', 'weight',
-'arm_length', 'wonderlic', 'ten_yard', 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 
+'arm_length', 'ten_yard', 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 
 'height_adj_ss', 'college_points', 'avg_diff']]
     X_test = rb_data[rb_data.draft_year == season][['age', 'pick', 'height', 'weight', 'arm_length',
-'wonderlic', 'ten_yard', 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 'height_adj_ss',
+'ten_yard', 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 'height_adj_ss',
 'college_points', 'avg_diff']]
     y_train = rb_data[rb_data.draft_year != season]['points']
     y_test = rb_data[rb_data.draft_year == season]['points']
@@ -190,7 +190,7 @@ for season in seasons:
 
 # 2019 Predictions... seems low for Jacobs?
 rb_19 = master_data[(master_data.draft_year == 2019) & (master_data.position == 'RB')]
-rb_19_x = rb_19[['age', 'pick', 'height', 'weight', 'arm_length', 'wonderlic', 'ten_yard',
+rb_19_x = rb_19[['age', 'pick', 'height', 'weight', 'arm_length', 'ten_yard',
 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 'height_adj_ss',
 'college_points', 'avg_diff']]
 
@@ -200,7 +200,7 @@ rb_predicted = rb_model.predict(rb_19_x)
 print(pd.DataFrame(rb_model.coef_, rb_19_x.columns, columns=['Coefficient'])) 
 print("Model Intercept: ", rb_model.intercept_) 
 rb_19['predicted_points'] = rb_predicted
-rb_19 = rb_19[['name', 'predicted_points', 'draft_year', 'age', 'pick', 'height', 'weight', 'arm_length', 'wonderlic', 'ten_yard',
+rb_19 = rb_19[['name', 'predicted_points', 'draft_year', 'age', 'pick', 'height', 'weight', 'arm_length', 'ten_yard',
 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 'height_adj_ss',
 'college_pid', 'college_points', 'avg_diff', 'player_id']]
 
