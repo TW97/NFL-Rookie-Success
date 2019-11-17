@@ -197,3 +197,5 @@ te_19 = te_19[['name', 'predicted_points', 'draft_year',
 'age', 'pick', 'arm_length', 'ten_yard', 'twenty_yard',
 'bench_press', 'vertical_leap', 'broad_jump', 'sixty_shuttle', 'three_cone', 
 'speed_score', 'college_points', 'avg_diff', 'college_pid', 'player_id']]
+
+te_19.to_csv('TEPred.csv', index=False)

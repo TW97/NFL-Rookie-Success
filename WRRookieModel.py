@@ -193,3 +193,5 @@ wr_19['predicted_points'] = wr_predicted
 wr_19 = wr_19[['name', 'predicted_points', 'draft_year', 'age', 'pick', 'height',
 'arm_length', 'hand_size', 'height_adj_ss', 'games', 'rec', 'rec_yards',
 'rec_td', 'avg_diff', 'college_pid', 'player_id']]
+
+#wr_19.to_csv('WRPred.csv', index=False)

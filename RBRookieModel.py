@@ -203,3 +203,5 @@ rb_19['predicted_points'] = rb_predicted
 rb_19 = rb_19[['name', 'predicted_points', 'draft_year', 'age', 'pick', 'height', 'weight', 'arm_length', 'wonderlic', 'ten_yard',
 'twenty_yard', 'bench_press', 'three_cone', 'burst_score', 'height_adj_ss',
 'college_pid', 'college_points', 'avg_diff', 'player_id']]
+
+rb_19.to_csv('RBPred.csv', index=False)

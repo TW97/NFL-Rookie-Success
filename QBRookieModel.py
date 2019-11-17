@@ -139,7 +139,7 @@ qb_data = qb_data[['player_id', 'points', 'college_pid', 'name', 'birth_year', '
 #qb_data.corr()[['points']].transpose().to_csv('QBCorr.csv')
 
 
-# qb_data.to_csv('QBPlayerData.csv')
+# qb_data.to_csv('QBPlayerData.csv', index=False)
 # master_data.to_csv('NFLPlayerData.csv', 
 #                 index=False)
 
@@ -205,3 +205,5 @@ qb_19['predicted_points'] = qb_predicted
 qb_19 = qb_19[['name', 'predicted_points', 'draft_year',
 'age', 'pick', 'pass_velocity', 'bench_press', 'broad_jump', 'agility_score',
  'height_adj_ss','college_pid', 'avg_diff', 'college_points_max', 'player_id']]
+
+qb_19.to_csv('QBPred.csv', index=False)
